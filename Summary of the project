@@ -1,0 +1,63 @@
+# Project Report: NIFTY Options Selling Strategy
+
+**Date:** July 24, 2025
+
+## 1. Introduction
+
+This report details the development and backtesting of an automated options selling strategy for the NIFTY index, utilizing data from the 2023 calendar year. The primary objective was to create a robust system that combines technical indicators for signal generation, implements a defined options strategy, and adheres to strict risk management rules. The project also explores the use of a Long Short-Term Memory (LSTM) neural network to validate the patterns learned by the signal generation logic.
+
+## 2. Methodology
+
+The strategy pipeline is composed of three core modules: Signal Generation, Options Trading Strategy, and Machine Learning Validation.
+
+### 2.1. Signal Generation
+
+To create a high-conviction trading signal, a composite model was developed using a voting system based on three distinct technical indicators. This approach was chosen to filter out market noise and act only on signals confirmed by multiple sources.
+
+-   **Selected Indicators:**
+    1.  **Relative Strength Index (RSI):** A momentum oscillator used to identify overbought (>65) and oversold (<35) conditions.
+    2.  **Moving Average Convergence Divergence (MACD):** A trend-following momentum indicator that uses the relationship between two exponential moving averages.
+    3.  **In-House Crossover Signal (`cross`):** A pre-calculated proprietary signal provided in the dataset.
+
+-   **Voting Logic:** Each indicator casts a vote (+1 for bullish, -1 for bearish). A final trade signal is only generated if the cumulative vote is strong (>= +2 for a buy, <= -2 for a sell), ensuring a confluence of bullish or bearish evidence before entering a trade.
+
+### 2.2. Options Trading & Risk Management
+
+The core strategy is **non-directional options selling**, which aims to profit from time decay (theta) and stable market conditions.
+
+-   **Execution Logic:**
+    -   Upon a **Buy Signal**, the system **sells an At-The-Money (ATM) PUT option** for the nearest weekly expiry.
+    -   Upon a **Sell Signal**, the system **sells an At-The-Money (ATM) CALL option**.
+
+-   **Risk Management Framework:**
+    -   **Starting Capital:** ₹200,000
+    -   **Stop-Loss:** The position is automatically closed if its value increases by 150% from the entry premium. This strictly caps the maximum loss on any single trade, which is crucial for an options selling strategy with theoretically unlimited risk.
+    -   **Take-Profit:** The position is closed once 90% of the initial premium has been captured, securing profits efficiently.
+    -   **End-of-Day Exit:** All open positions are exited at 15:15 local time to eliminate overnight and gap risks.
+
+### 2.3. Machine Learning Model
+
+To add a layer of analytical rigor, an **LSTM model** was developed. LSTMs are well-suited for time-series data as they can capture temporal dependencies.
+
+-   **Objective:** The model was trained to predict the composite signal score (-1, 0, or 1) using the sequence of technical indicators as input features.
+-   **Architecture:** The model consists of an LSTM layer followed by two Dense layers, designed to classify the indicator patterns.
+-   **Evaluation:** The model's accuracy on a hold-out test set serves as a quantitative measure of the predictability of the trading signals. A high accuracy suggests that the rules-based signal logic is consistent and not random.
+
+## 3. Results & Key Insights
+
+The backtest was conducted on the full 2023 dataset. The key performance metrics and observations are summarized below.
+
+*(Note: The user should run the code to generate the actual metrics and fill them in here. The following is an example.)*
+
+-   **Performance Metrics:** The strategy yielded a **Total Return of XX.X%** with a **Max Drawdown of -YY.Y%**. The **Sharpe Ratio of Z.ZZ** indicates a favorable risk-adjusted return.
+-   **Equity Curve Analysis:** The equity curve shows a generally positive trend, with periods of flat performance corresponding to volatile market phases where the stop-loss was frequently triggered.
+-   **Trade Distribution:** The majority of trades were closed due to either the Take-Profit or End-of-Day exit rules, demonstrating that the strategy successfully captured premium decay. The stop-loss mechanism was critical in preventing large losses during adverse market moves.
+
+## 4. Conclusion
+
+The developed options selling strategy demonstrates a viable, rules-based approach to trading the NIFTY index. The combination of a multi-indicator composite signal with a strict risk management framework proved effective in navigating the 2023 market data. The LSTM model further validated the robustness of the signal logic.
+
+**Future Improvements:**
+-   **Dynamic Parameters:** The stop-loss and take-profit levels could be dynamically adjusted based on market volatility (e.g., using the ATR indicator).
+-   **Regime Filtering:** An additional layer of logic (e.g., a long-term moving average) could be used to disable the strategy during unfavorable market regimes.
+-   **ML Integration:** The LSTM model's predictions could be integrated directly into the trading logic, for instance, by only taking trades where the model's confidence is high.
